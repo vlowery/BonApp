@@ -14,7 +14,7 @@ class BonappSpider(Spider):
         blog_titles = response.xpath('//div[@class="feature-item-content"]')
         blog_links = [f'https://www.bonappetit.com{lnk}' for lnk in blog_titles.xpath('.//a/@href').extract()]
         for url in blog_links:
-            if re.search("/recipe/", url):
+            if "/recipe/" in url:
                 yield Request(url = url, callback = self.parse_recipe_page)
             else:
                 yield Request(url = url, callback = self.parse_gallery_page)
@@ -35,9 +35,13 @@ class BonappSpider(Spider):
 
         Name = response.xpath('//a[@name="top"]/text()').extract()
         
-        Ingredients = response.xpath('//div[@class="ingredients__text"]/text()').extract()
-        # if response.xpath('./div/a'):
-        #     Ingredients.append(response.xpath('./div/a/text()').extract()[0] + Ingredient)
+        Ingredients = []
+        ingred_bin = response.xpath('//div[@class="ingredients__text"]')
+        for ingred in ingred_bin:
+            if ingred.xpath('./a'):
+                Ingredients.append(ingred.xpath('./a/text()').extract()[0] + ingred.xpath('./text()').extract()[0])
+            else:
+                Ingredients.append(ingred.xpath('./text()').extract()[0])
         
         if response.xpath('//li[@class="step"]//text()').extract():
             Instructions = response.xpath('//li[@class="step"]//text()').extract()
