@@ -12,28 +12,24 @@ class BonappSpider(Spider):
     def parse(self, response):
 
         blog_titles = response.xpath('//div[@class="feature-item-content"]')
-        for article in blog_titles[4:5]:
-            if article.xpath('//div[@class="ingredients__text"]/text()').extract():
-                recipe_url = [f'https://www.bonappetit.com{lnk}' for lnk in article.xpath('.//a/@href').extract()]
-                yield Request(url = recipe_url, callback = self.parse_recipe_page)
-            # if re.search('\d+', str(article.xpath('.//a/text()').extract())):
-            #     blog_links = [f'https://www.bonappetit.com{lnk}' for lnk in article.xpath('.//a/@href').extract()]
-            #     print('='*55)
-            #     print(blog_links)
-            #     print('='*55)
-            #     for url in blog_links:
-            #         print('+'*55)
-            #         print(url)
-            #         print('+'*55)
-            #         yield Request(url = url, callback = self.parse_blog_page)
+        blog_links = [f'https://www.bonappetit.com{lnk}' for lnk in blog_titles.xpath('.//a/@href').extract()]
+        for url in blog_links[:1]:
+            yield Request(url = url, callback = self.parse_gallery_page)
       
 
+    def parse_gallery_page(self, response):
 
-    def parse_blog_page(self, response):
+        if bool(response.xpath('//div[@class="ingredients__text"]/text()').extract()):
+            yield Request(url = self, callback = self.parse_recipe_page)
 
-        recipe_links = response.xpath('//div[@class="gallery-slid-caption__cta-block"]//a/@href').extract()
-        for url in recipe_links:
-            yield Request(url = url, callback = self.parse_recipe_page)
+        elif bool(response.xpath('//div[@class="content-card-embed__info"]//a/@href').extract()):
+            recipe_link = [f'https://www.bonappetit.com{lnk}' for lnk in response.xpath('//div[@class="content-card-embed__info"]//a/@href').extract()]
+            yield Request(url = recipe_link, callback = self.parse_recipe_page)
+
+        else:
+            recipes_link = response.xpath('//div[@class="gallery-slid-caption__cta-block"]//a/@href').extract()
+            for url in recipes_link:
+                yield Request(url = url, callback = self.parse_recipe_page)
 
 
     def parse_recipe_page(self, response):

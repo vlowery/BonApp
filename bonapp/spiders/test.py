@@ -33,3 +33,25 @@
 #                 item["DishTitle"] = Name
 
 #                 yield item
+
+
+
+
+
+
+
+            # if bool(article.xpath('//div[@class="ingredients__text"]/text()').extract()):
+            #     recipe_url = [f'https://www.bonappetit.com{lnk}' for lnk in article.xpath('.//a/@href').extract()]
+            #     print('blog_links______'*10)
+            #     print(recipe_url)
+            #     print('blog_links______'*10)
+            #     yield Request(url = recipe_url, callback = self.parse_recipe_page)
+            
+            # elif bool(article.xpath('//div[@class="content-card-embed__info"]//a/@href').extract()):
+            #     blog_url = [f'https://www.bonappetit.com{lnk}' for lnk in article.xpath('.//a/@href').extract()]
+            #     print('____blog_url'*10)
+            #     print(blog_url)
+            #     print('____blog_url'*10)                
+            #     yield Request(url = blog_url, callback = self.parse_recipe_page)
+            
+            # elif re.search('\d+', str(article.xpath('.//a/text()').extract())):
