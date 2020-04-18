@@ -38,10 +38,12 @@ class BonappSpider(Spider):
         Ingredients = response.xpath('//div[@class="ingredients__text"]/text()').extract()
         # if response.xpath('./div/a'):
         #     Ingredients.append(response.xpath('./div/a/text()').extract()[0] + Ingredient)
+        Instructions = response.xpath('//ul[@class="steps"]//text()').extract()
 
         item = BonappItem()
         item["Ingredients"] = Ingredients
         item["DishTitle"] = Name
+        item["Instructions"] = Instructions
 
         yield item
 
