@@ -12,3 +12,4 @@ class BonappItem(Item):
     DishTitle = Field()
     Ingredients = Field()
     Instructions = Field()
+    Reviews = Field()

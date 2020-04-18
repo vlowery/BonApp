@@ -13,7 +13,7 @@ class BonappSpider(Spider):
 
         blog_titles = response.xpath('//div[@class="feature-item-content"]')
         blog_links = [f'https://www.bonappetit.com{lnk}' for lnk in blog_titles.xpath('.//a/@href').extract()]
-        for url in blog_links[9:10]:
+        for url in blog_links[4:5]:
             yield Request(url = url, callback = self.parse_gallery_page)
       
 
@@ -39,11 +39,13 @@ class BonappSpider(Spider):
         # if response.xpath('./div/a'):
         #     Ingredients.append(response.xpath('./div/a/text()').extract()[0] + Ingredient)
         Instructions = response.xpath('//ul[@class="steps"]//text()').extract()
+        Reviews = response.xpath('//div[@class="review-body"]//text()').extract()  
 
         item = BonappItem()
         item["Ingredients"] = Ingredients
         item["DishTitle"] = Name
         item["Instructions"] = Instructions
+        item["Reviews"] = Reviews
 
         yield item
 
