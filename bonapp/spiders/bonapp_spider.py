@@ -13,17 +13,17 @@ class BonappSpider(Spider):
 
         blog_titles = response.xpath('//div[@class="feature-item-content"]')
         blog_links = [f'https://www.bonappetit.com{lnk}' for lnk in blog_titles.xpath('.//a/@href').extract()]
-        for url in blog_links[:1]:
+        for url in blog_links[9:10]:
             yield Request(url = url, callback = self.parse_gallery_page)
       
 
     def parse_gallery_page(self, response):
 
         if bool(response.xpath('//div[@class="ingredients__text"]/text()').extract()):
-            yield Request(url = self, callback = self.parse_recipe_page)
+            yield Request(url = response.url, dont_filter = True, callback = self.parse_recipe_page)
 
         elif bool(response.xpath('//div[@class="content-card-embed__info"]//a/@href').extract()):
-            recipe_link = [f'https://www.bonappetit.com{lnk}' for lnk in response.xpath('//div[@class="content-card-embed__info"]//a/@href').extract()]
+            recipe_link = ('https://www.bonappetit.com{lnk}'.format(lnk = response.xpath('//div[@class="content-card-embed__info"]//a/@href').extract_first()))
             yield Request(url = recipe_link, callback = self.parse_recipe_page)
 
         else:
