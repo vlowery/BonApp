@@ -10,6 +10,8 @@ from scrapy.item import Item, Field
 
 class BonappItem(Item):
     DishTitle = Field()
+    Published = Field()
     Ingredients = Field()
     Instructions = Field()
+    Rating = Field()
     Reviews = Field()
