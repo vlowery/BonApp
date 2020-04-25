@@ -17,7 +17,7 @@ class BonappSpider(Spider):
 
         timespan = pd.date_range(start='1/1/2015', end='5/1/2020', freq='MS')
         urls_bymonth = [f'https://www.bonappetit.com/search/?content=recipe&issueDate={date}-01' for date in timespan.strftime('%Y-%m')]
-        for url in urls_bymonth[:10]:
+        for url in urls_bymonth:
             yield Request(url=url, callback=self.parse_monthly_urls)
 
 
