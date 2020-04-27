@@ -45,41 +45,41 @@ class BonappSpider(Spider):
 
     def parse_recipe_page(self, response):
 
-        Name = response.xpath('//a[@name="top"]/text()').extract()
+        name = response.xpath('//a[@name="top"]/text()').extract()
         
-        Published = response.xpath('//div[@class="MonthYear"]/text()').extract()
+        published = response.xpath('//div[@class="MonthYear"]/text()').extract()
 
         ## Some ingredients have hyperlinked words for brands, the following navigates that possibility
-        Ingredients = []
+        ingredients = []
         ingred_bin = response.xpath('//div[@class="ingredients__text"]')
         for ingred in ingred_bin:
             if ingred.xpath('./a'):
-                Ingredients.append(''.join(ingred.xpath('.//descendant-or-self::*/text()').extract()))
+                ingredients.append(''.join(ingred.xpath('.//descendant-or-self::*/text()').extract()))
             else:
-                Ingredients.append(ingred.xpath('./text()').extract()[0])
+                ingredients.append(ingred.xpath('./text()').extract()[0])
         
         ## Newer recipes have a more modern formatting, thus the need for two xpath possibilities
         if response.xpath('//li[@class="step"]//text()').extract():
-            Instructions = response.xpath('//li[@class="step"]//text()').extract()
+            instructions = response.xpath('//li[@class="step"]//text()').extract()
         else:
-            Instructions = response.xpath('//ul[@class="steps"]//text()').extract()
+            instructions = response.xpath('//ul[@class="steps"]//text()').extract()
         
         rating_string = response.xpath('//div[@class="max-width-container"]/div/img/@alt').extract_first()
         if rating_string:
-            Rating = re.search('\d+\.?\d*', rating_string).group(0)
+            rating = re.search('\d+\.?\d*', rating_string).group(0)
         else:
-            Rating = ''
+            rating = ''
 
-        Reviews = response.xpath('//div[@class="review-body"]//text()').extract()  
+        reviews = response.xpath('//div[@class="review-body"]//text()').extract()  
 
 
         item = BonappItem()
-        item["DishTitle"] = Name
-        item["Published"] = Published
-        item["Ingredients"] = Ingredients
-        item["Instructions"] = Instructions
-        item["Rating"] = Rating
-        item["Reviews"] = Reviews
+        item["DishTitle"] = name
+        item["Published"] = published
+        item["Ingredients"] = ingredients
+        item["Instructions"] = instructions
+        item["Rating"] = rating
+        item["Reviews"] = reviews
 
         yield item
 
