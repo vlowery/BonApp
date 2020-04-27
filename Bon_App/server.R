@@ -73,7 +73,7 @@ function(input, output, session){
                 ## RETURN AND ADD BREAKS TO COLORS
 
     df_input <- reactive({
-        og_bonapp_df %>% filter(., format(og_bonapp_df$Published, "%Y") == c(input$checkGroup1))
+        og_bonapp_df %>% filter(., format(og_bonapp_df$Published, "%Y") %in% c(input$checkGroup1))
     })
     
     output$plot9 <- renderPlot(
@@ -131,6 +131,4 @@ function(input, output, session){
     
     
 }
-
-
 

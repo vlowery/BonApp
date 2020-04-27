@@ -54,7 +54,7 @@ shinyUI(dashboardPage(
                               box(width = 4, p("Output in general it seems has been on the decline for a few years. The graph to the left clearly illustrates a lessening in new material for the past three years. Bon Appetit's online recipe peak looks to fall within 2016, where a total of 741 new recipes were published."),
                                   p("After a peak in 2016, following an almost as close year in 2017 with 724 recipes posted, content output swiftly declined. 2018 saw only 501 recipes, while 2019 only made it into the low 400s. The reduction in output might be a sign of shifting priorities in the company."),
                                   p("It's possible the shift in recipe output moved from quantity towards quality. Bon Appetit has become famous for its immaculate test kitchen and well-versed chefs--as seen in videos uploaded to their Youtube channel. With magazine sales struggling to compete with an online 
-                                           world full of video 'how-to's and tasty recipes, it's possible this decline in recipes posted is in part due to Bon Appetit spending more time with the recipes through different mediums, like developing coorresponding videos." )),
+                                           world full of video 'how-to's and tasty recipes, it's possible this decline in recipes posted is in part due to Bon Appetit spending more time with the recipes through different mediums, like developing corresponding videos." )),
                               box(width=3, tableOutput('totals_table'))),
                      
                  fluidRow(h2("Month by Month, for Each Year")),
