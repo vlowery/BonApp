@@ -19,6 +19,9 @@ function(input, output, session){
             xlab("Months of Publishing") + ylab("Reviews Written per Recipe") + ggtitle("Number of Reviews Written per Recipe") +
             labs(color = "Count") 
     )
+    output$reviews_table <- renderTable(
+        year_review_totals
+    )
     
     output$plot8 <- renderPlot(
         ggplot(og_bonapp_df, aes(x=Published, y=Reviews)) + geom_col(aes(fill=format(og_bonapp_df$Published, "%Y"))) +
@@ -67,7 +70,7 @@ function(input, output, session){
         
         bubbles(bubble_df$frequency_count, bubble_df$ingred, 
                 key = bubble_df$ingred, 
-                color =  as.vector(wes_palette(50, name = "Moonrise3", type = "continuous"))) #rainbow(10, alpha = NULL))
+                color =  as.vector(wes_palette(50, name = "Moonrise3", type = "continuous")))
     })
     
     output$pop_ingred_table <- renderDataTable(popular_ingred_table)
@@ -84,27 +87,26 @@ function(input, output, session){
     )
     
     
-    # COVID-19 Review Count in 2020
+    # COVID-19 Recipe Count in 2020
     
     output$plot4 <- renderPlot(
-        
-    ggplot(df_2020, aes(x=Published, y=Reviews)) + geom_point(aes(color=Reviews, size = 2)) + 
-        ggtitle("Number of Reviews per Recipe Through 2020") +
-        xlab("Months") +ylab("Review Count per Recipe Instance") +
-        scale_color_gradientn(colors = wes_palette("GrandBudapest2", 4, type = "discrete"))
-    )
-   
-    # COVID-19 Monthly Recipe Count 2020
-    
-    output$plot5 <- renderPlot(
-        ggplot(df_2020, aes(x=Published)) + geom_bar(aes(fill=after_stat(count)))
-    )
-    
-    output$plot6 <- renderPlot(
-        ggplot(df_2020_by_Pub, aes(x=Published, y=recipe_count)) + 
-            geom_col(aes(fill=(review_count))) + 
+        ggplot(df_2020_totals, aes(x=Published, y=n)) + geom_bar(stat = "identity", aes(fill=n)) + 
+            ggtitle("Monthly Total Recipes Published in 2020") + xlab("Months") + ylab("Recipe Count") + theme(legend.title=element_blank()) +
             scale_fill_gradientn(colors = wes_palette("Darjeeling1", 3, type = "continuous"))
     )
+   
+    # COVID-19 Review Count 2020
+    
+    output$plot5 <- renderPlot(
+        ggplot(df_2020_by_Pub, aes(x=Published, y=review_count)) + 
+            geom_col(aes(fill=(review_count))) + theme(legend.title=element_blank()) + 
+            ggtitle("Monthly Total Reviews Written in 2020") + xlab("Months") + ylab("Review Count") +
+            scale_fill_gradientn(colors = brewer.pal(n=10, name = "Spectral")) #wes_palette("Zissou1", 3, type = "continuous"))
+    )
+    
+    # output$plot6 <- renderPlot(
+    # 
+    # )
     
     
 }

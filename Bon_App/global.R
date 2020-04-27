@@ -10,8 +10,8 @@ library(googleVis)
 library(wesanderson)
 library(bubbles)
 
-og_bonapp_df <- read_csv("full_bonapp_df.csv")
-ingred_badata_df <- read_csv("bonapp_df.csv")
+og_bonapp_df <- read_csv("./data/full_bonapp_df.csv")
+ingred_badata_df <- read_csv("./data/bonapp_df.csv")
 
 as.Date(og_bonapp_df$Published)
 as.Date(ingred_badata_df$published)
@@ -28,6 +28,11 @@ for (i in 1:obs) {
   }}
 
 og_bonapp_df$Reviews <- as.numeric(og_bonapp_df$Reviews)
+
+year_review_totals <- og_bonapp_df %>% filter(!is.na(Reviews)) %>% group_by(Year = format(og_bonapp_df$Published, "%Y")) %>% summarise("Review Count" = as.integer(sum(Reviews)))
+year_review_totals <- year_review_totals[1:6, ]
+year_review_totals
+  
 ######
 obs = nrow(df_2020) 
 for (i in 1:obs) {        
@@ -40,6 +45,10 @@ for (i in 1:obs) {
 df_2020$Reviews <- as.numeric(df_2020$Reviews)
 #####
 df_2020_by_Pub <-df_2020 %>% group_by(., Published) %>% summarise(., review_count = sum(Reviews), recipe_count = n_distinct(DishTitle))
+
+df_2020_totals <- og_bonapp_df %>% filter(format(og_bonapp_df$Published, "%Y") == 2020) %>% 
+  group_by(Published, ) %>% tally()
+
 #####
 popular_ingred_table <- ingred_badata_df %>% group_by(., ingred) %>% 
   summarise(., frequency_count = n_distinct(dishtitle)) %>%

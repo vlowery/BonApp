@@ -5,6 +5,7 @@ library(tidyr)
 library(ggplot2)
 library(ggthemes)
 library(googleVis)
+library(RColorBrewer)
 
 og_bonapp_df <- read_csv("./Bon_App/full_bonapp_df.csv")
 ingred_badata_df <- read_csv("./Bon_App/bonapp_df.csv")
@@ -76,25 +77,28 @@ table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(Published)) %>% group_b
   summarise(., recipe_count = n_distinct(DishTitle))
 as.data.frame(table_totals_per_year)
 
-########## COVID-19 Review Count in 2020 ###########
+########## COVID-19 Recipe Count in 2020 ###########
 
-ggplot(df_2020, aes(x=Published, y=Reviews)) + geom_point(aes(color=Reviews, size = 2)) + 
-  ggtitle("Number of Reviews per Recipe Through 2020") +
-  xlab("Months") +ylab("Review Count per Recipe Instance") +
-  scale_color_gradientn(colors = wes_palette("GrandBudapest2", 4, type = "discrete"))
+df_2020_totals <- og_bonapp_df %>% filter(format(og_bonapp_df$Published, "%Y") == 2020) %>% 
+  group_by(Published, ) %>% tally()
 
-
-
-# COVID-19 Recipe Count through 2020
-    ## Monthly Recipe Count 2020
-ggplot(df_2020, aes(x=Published)) + geom_bar(aes(fill=after_stat(count))) 
-
-df_2020_by_Pub <-df_2020 %>% group_by(., Published) %>% summarise(., review_count = sum(Reviews), recipe_count = n_distinct(DishTitle))
-ggplot(df_2020_by_Pub, aes(x=Published, y=recipe_count)) + 
-  geom_col(aes(fill=(review_count))) + 
+ggplot(df_2020_totals, aes(x=Published, y=n)) + geom_bar(stat = "identity", aes(fill=n)) + 
+  ggtitle("Monthly Recipe Output in 2020") + xlab("Months") + ylab("Recipe Count") +
   scale_fill_gradientn(colors = wes_palette("Darjeeling1", 3, type = "continuous"))
 
-    ## Density of Reviews Written
+# ggplot(df_2020, aes(x=Published, y=Reviews)) + geom_point(aes(color=Reviews, size = 2)) + 
+#   ggtitle("Number of Reviews per Recipe Through 2020") +
+#   xlab("Months") +ylab("Review Count per Recipe Instance") +
+#   scale_color_gradientn(colors = wes_palette("GrandBudapest2", 4, type = "discrete"))
+
+    ## Monthly Review Count 2020
+
+df_2020_by_Pub <-df_2020 %>% group_by(., Published) %>% summarise(., review_count = sum(Reviews), recipe_count = n_distinct(DishTitle))
+ggplot(df_2020_by_Pub, aes(x=Published, y=review_count)) + 
+  geom_col(aes(fill=(review_count))) + 
+  scale_fill_gradientn(colors = wes_palette("Zissou1", 3, type = "continuous"))
+
+    ## Density of Reviews Written Months of 2020, not good
 ggplot(df_2020, aes(x=format(df_2020$Published, "%m"), y=Reviews)) + 
   geom_violin(aes(fill=format(df_2020$Published, "%B"))) +
   ggtitle("Spread of Review Density per Recipe in 2020") + 
@@ -102,6 +106,7 @@ ggplot(df_2020, aes(x=format(df_2020$Published, "%m"), y=Reviews)) +
   xlab("Months") + ylab("Range of Reviews per Recipe") + 
   scale_fill_discrete(breaks=c("January","February","March", "April", "May"), wes_palette("GrandBudapest1"))
 
+## Density of Reviews Written 2015-2020, not good
 ggplot(og_bonapp_df, aes(x=format(og_bonapp_df$Published, "%Y"), y=Reviews)) +
     geom_boxplot(aes(fill=format(og_bonapp_df$Published, "%Y"))) +
     ggtitle("Spread of Review Density per Recipe") +
