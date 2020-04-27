@@ -9,6 +9,8 @@ library(ggthemes)
 library(googleVis)
 library(wesanderson)
 library(bubbles)
+library(RColorBrewer)
+library(rex)
 
 og_bonapp_df <- read_csv("./data/full_bonapp_df.csv")
 ingred_badata_df <- read_csv("./data/bonapp_df.csv")
@@ -53,3 +55,12 @@ df_2020_totals <- og_bonapp_df %>% filter(format(og_bonapp_df$Published, "%Y") =
 popular_ingred_table <- ingred_badata_df %>% group_by(., ingred) %>% 
   summarise(., frequency_count = n_distinct(dishtitle)) %>%
   arrange(., desc(frequency_count))
+
+######
+year_recipe_totals <- og_bonapp_df %>% group_by(., Year = format(Published, "%Y")) %>% tally() %>% head(6)
+
+#####
+top_reviewed_dish <- og_bonapp_df %>% group_by(Reviews) %>% arrange(desc(Reviews)) %>% head(6)
+
+####
+top_rated_dish <- og_bonapp_df %>% group_by(Rating) %>% arrange(desc(Rating)) %>% select(DishTitle, Published, Rating, Reviews) %>% arrange(desc(Rating), desc(Reviews)) %>% head(20)

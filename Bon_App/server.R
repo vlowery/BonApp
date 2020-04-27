@@ -4,12 +4,9 @@ function(input, output, session){
 
     # RATINGS through the Years
     
-    output$plot1 <- renderPlot(
-        ggplot(og_bonapp_df, aes(x=Published, y=Rating)) + geom_violin(aes(fill=format(og_bonapp_df$Published, "%Y"))) +
-            theme(legend.title=element_blank())
-    )
     output$plot7 <- renderPlot(
-        ggplot(og_bonapp_df, aes(x=Published, y=Rating)) + geom_point(size = 2, aes(color=Rating))
+        ggplot(og_bonapp_df, aes(x=Published, y=Rating)) + geom_point(size = 3, aes(color=Rating)) +
+            scale_color_gradientn(colors = wes_palette("Darjeeling1", 3, type = "continuous"))
     )
     
             ## Review Count through the years
@@ -29,25 +26,50 @@ function(input, output, session){
             ggtitle("Total Reviews Written by Month")
     )
     
+    output$top_1 <- renderInfoBox(
+        infoBox("Most Reviewed Dish", top_reviewed_dish$DishTitle[1], fill = TRUE
+        ))
+    
+    output$top_2 <- renderInfoBox(
+        infoBox("Second Most Reviewed", top_reviewed_dish$DishTitle[2], fill = FALSE
+        ))
+    
+    output$top_3 <- renderInfoBox(
+        infoBox("Third Most Reviewed", top_reviewed_dish$DishTitle[3], fill = FALSE
+        ))
+    
+    output$best_1 <- renderInfoBox(
+        infoBox("Highest Rated Dish", top_rated_dish$DishTitle[1], fill = TRUE
+        ))
+    
+    output$best_2 <- renderInfoBox(
+        infoBox("Second Highest Rated", top_rated_dish$DishTitle[2], fill = FALSE
+        ))
+    
+    output$best_3 <- renderInfoBox(
+        infoBox("Third Highest Rated", top_rated_dish$DishTitle[3], fill = FALSE
+        ))
+    
     # INFORMATION Recipe Count Through the Years
     
     output$plot2 <- renderPlot(
         og_bonapp_df %>% filter(!is.na(Published)) %>% ggplot(aes(x=(format(Published, "%m/%B")))) + 
             geom_bar(na.rm = TRUE, position = "dodge", aes(fill=(format(Published, "%Y")))) +
             ggtitle("Number of Recipes Published From 2015-2020") + theme(legend.title=element_blank()) +
-            xlab("Months") +ylab("Recipe Count")
+            xlab("Months") + ylab("Recipe Count") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+
     )
     
-    table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(Published)) %>% group_by(., year = format(Published, "%Y")) %>% 
-        summarise(., recipe_count = n_distinct(DishTitle))
+    table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(Published)) %>% group_by(., Year = format(Published, "%Y")) %>% 
+        summarise(., "Recipe Count" = n_distinct(DishTitle))
     as.data.frame(table_totals_per_year)
     output$totals_table <- renderTable(table_totals_per_year)
     
     output$plot10 <- renderPlot(
         ggplot(og_bonapp_df, aes(x=Published)) + geom_bar(aes(fill=format(og_bonapp_df$Published, "%Y"))) +
-            theme(legend.title=element_blank())
+            theme(legend.title=element_blank()) + xlab("Publishing Timeline, Months") + ylab("Recipe Count")
     )
-            ### THIS IS THE INTERACTIVE MAP
+            ### THIS IS THE INTERACTIVE GRAPH
                 ## RETURN AND ADD BREAKS TO COLORS
 
     df_input <- reactive({
@@ -55,9 +77,11 @@ function(input, output, session){
     })
     
     output$plot9 <- renderPlot(
-    df_input() %>% group_by(., year = format(Published, "%Y"), month = format(Published, "%m")) %>% 
+    df_input() %>% group_by(., year = format(Published, "%Y"), month = format(Published, "%m/%B")) %>% 
         summarise(., recipe_count = n_distinct(DishTitle)) %>% 
-        ggplot(aes(x=month, y=as.numeric(recipe_count))) + geom_col(position = "dodge", aes(fill=year)) 
+        ggplot(aes(x=month, y=as.numeric(recipe_count))) + geom_col(position = "dodge", aes(fill=year)) +
+        ylab("Total Recipes") + xlab("Months") + labs(fill = "Year") + 
+        theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
     )
     
@@ -76,14 +100,15 @@ function(input, output, session){
     output$pop_ingred_table <- renderDataTable(popular_ingred_table)
     
     ingred_input_df <- reactive({
-        ingred_badata_df %>% filter(ingred == input$ingred_choice) %>% 
-            group_by(., published, ingred) %>% 
-            summarise(., review_count = n_distinct(dishtitle))
+        ingred_badata_df %>% filter(grepl(input$ingred_choice, ingred)) %>% 
+        group_by(., Year = format(published, "%Y")) %>% tally() %>% mutate(., Ratio = n/year_recipe_totals$n) 
     })
     
     output$plot11 <- renderPlot(
-        ingred_input_df() %>% ggplot(aes(x = published, y = review_count)) + 
-        geom_area() 
+        ingred_input_df() %>% ggplot(aes(x = Year, y=Ratio)) + geom_bar(aes(fill = n), stat="identity") + 
+        scale_fill_gradientn(colors = brewer.pal(n=10, name = "Spectral")) +
+        theme(legend.title=element_blank()) + 
+        ylab("Proportion of Ingredient to Total Recipes") + xlab("Yearly Timeline") + ggtitle("Interactive Ingredient Tracking: The Proportion of an Ingredient's Use Out of the Total Number of Recipes for the Year")
     )
     
     
@@ -104,89 +129,8 @@ function(input, output, session){
             scale_fill_gradientn(colors = brewer.pal(n=10, name = "Spectral")) #wes_palette("Zissou1", 3, type = "continuous"))
     )
     
-    # output$plot6 <- renderPlot(
-    # 
-    # )
-    
     
 }
-    # output$max1 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max2 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max3 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max4 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max5 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max6 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max7 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max8 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max9 <- renderInfoBox({
-    #     max_value <- max(crossdf$Minutes)
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # output$max10 <- renderInfoBox({
-    #     max_value <- summarise(ingred_badata_df$ingred, n())
-    #     max_day <- crossdf$Day[crossdf$Minutes ==max_value]
-    #     infoBox(title="Longest Puzzle", 
-    #             round(max_value, 2), subtitle= paste(c("/minutes on ", as.character(max_day)), collapse = ""), icon=icon("angle-double-up"), width=6)
-    # })
-    # 
-    
-    
-    
-    
-    
-    
-    
-    
-    
- 
 
-# ggplot(og_bonapp_df[format(og_bonapp_df$Published, "%Y") == format(as.Date(input$radio2), "%Y"), ], 
-#        aes(x=Published, y=Rating)) + geom_point(aes(color=Rating))
-
-
-# ggplot(full_bonapp_df, aes(x=Published, y=Rating)) + geom_point(aes(color=Rating))
-# seq(as.Date("2015-01-01"), by='month', length.out = 12)
 
 

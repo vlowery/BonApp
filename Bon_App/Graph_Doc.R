@@ -130,46 +130,34 @@ ingred_badata_df %>% group_by(., published, ingred) %>%
   ggplot(aes(x = (format(published, "%m/%B")), y = review_count)) + 
   geom_smooth() + coord_polar()
 
-ingred_badata_df %>% group_by(., published, ingred) %>% 
-  summarise(., review_count = n_distinct(dishtitle)) %>% 
-  filter(ingred == "pickles") %>% 
-  ggplot(aes(x = published, y = review_count)) + 
-  geom_area() 
+ingred_badata_df %>% filter(grepl("tomatoes", ingred)) %>%
+  group_by(., Year = format(published, "%Y")) %>% 
+  tally() %>% 
+  ggplot(aes(x = Year, y=n)) + 
+  geom_bar(aes(fill = n), stat="identity") + 
+  scale_fill_gradientn(colors = brewer.pal(n=10, name = "Spectral"))
+
+library(rex)
 
 ##############
 
-obs = nrow(df_2020) 
-for (i in 1:obs) {        
-  if (is.na(df_2020$Reviews[i])) { 
-    df_2020$Reviews[i] = 0
-  } else{
-    df_2020$Reviews[i] = length(strsplit(df_2020$Reviews[i], split=" ,")[[1]])
-}}
+# table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(Published)) %>% group_by(., year = format(Published, "%Y")) %>% 
+#   summarise(., recipe_count = n_distinct(DishTitle)) #%>% ggplot(aes(x=month, y = as.numeric(recipe_count))) + 
+#   geom_col(position = "dodge", aes(fill=year)) 
 
-df_2020$DishTitle
-
-df_2020_by_Pub <-df_2020 %>% group_by(., Published) %>% summarise(., review_count = sum(Reviews), recipe_count = n_distinct(DishTitle))
+  
+  
 
 
 
-df_2016 <- og_bonapp_df %>% filter(., format(og_bonapp_df$Published, "%Y") == 2016)
-df_2016 %>% group_by(., month = format(Published, "%m")) %>% summarise(., recipe_count = n_distinct(DishTitle))
-og_bonapp_df %>% summarise(., recipe_count = n_distinct(DishTitle))
+  
 
-df_2016 %>% group_by(., month = format(Published, "%m")) %>% 
-  summarise(., recipe_count = n_distinct(DishTitle)) %>% 
-  ggplot(aes(x=month, y=as.numeric(recipe_count))) + geom_col() 
+
+  
+  
+  
 
 
 
 
-as.data.frame(table_totals_per_year)
-
-table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(Published)) %>% group_by(., year = format(Published, "%Y")) %>% 
-  summarise(., recipe_count = n_distinct(DishTitle)) #%>% ggplot(aes(x=month, y = as.numeric(recipe_count))) + 
-  geom_col(position = "dodge", aes(fill=year)) 
-
-+
-  ggtitle("Number of Recipes Published From 2015-2020") + theme(legend.title=element_blank()) +
-  xlab("Months") +ylab("Recipe Count")
 
