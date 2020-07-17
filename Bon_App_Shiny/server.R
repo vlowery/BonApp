@@ -1,7 +1,56 @@
 
 
 function(input, output, session){
-
+    
+    # Averages
+    
+    output$monthly_publishing <- renderPlot(
+        og_bonapp_df %>% select(dishtitle, published) %>% 
+            group_by(published) %>% summarise(monthly_totals = n_distinct(dishtitle)) %>% 
+            ggplot() + geom_col(aes(x = published, y = monthly_totals, fill = as.character(year(published)))) +
+            theme(legend.title=element_blank()) + theme(legend.position="none") + 
+            xlab("Publishing Timeline, Months") + ylab("Recipe Count")
+    )
+    
+    output$yearly_publishing <- renderPlot(
+        og_bonapp_df %>% select(dishtitle, published) %>% group_by(year(published)) %>%
+             na.omit() %>% summarise(yearly_totals = n_distinct(dishtitle)) %>% 
+            ggplot() + geom_line(aes(x = year(published), y = yearly_totals)) + 
+            theme(legend.title=element_blank()) + theme(legend.position="none") + 
+            xlab("Publishing Timeline, Years") + ylab("Recipe Count")
+    )
+    
+    output$plot2 <- renderPlot(
+        og_bonapp_df %>% filter(!is.na(published)) %>% ggplot(aes(x=(format(published, "%m/%B")))) + 
+            geom_bar(na.rm = TRUE, position = "dodge", aes(fill=(format(published, "%Y")))) +
+            ggtitle("Number of Recipes Published From 2015-2020") + theme(legend.title=element_blank()) +
+            xlab("Months") + ylab("Recipe Count") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        
+    )
+    
+    table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(published)) %>% group_by(., Year = format(published, "%Y")) %>% 
+        summarise(., "Recipe Count" = n_distinct(dishtitle))
+    as.data.frame(table_totals_per_year)
+    output$totals_table <- renderTable(table_totals_per_year)
+    
+    
+    ### THIS IS THE INTERACTIVE GRAPH
+    ## RETURN AND ADD BREAKS TO COLORS
+    
+    df_input <- reactive({
+        og_bonapp_df %>% filter(., format(og_bonapp_df$published, "%Y") %in% c(input$checkGroup1))
+    })
+    
+    output$plot9 <- renderPlot(
+        df_input() %>% group_by(., year = format(published, "%Y"), month = format(published, "%m/%B")) %>% 
+            summarise(., recipe_count = n_distinct(dishtitle)) %>% 
+            ggplot(aes(x=month, y=as.numeric(recipe_count))) + geom_col(position = "dodge", aes(fill=year)) +
+            ylab("Total Recipes") + xlab("Months") + labs(fill = "Year") + 
+            theme(axis.text.x = element_text(angle = 45, hjust = 1))
+        
+    )
+    
+    
     # Ratings through the Years
     
     output$timelapse_ratings <- renderPlot(
@@ -43,57 +92,16 @@ function(input, output, session){
                 subtitle = paste(top_reviewed_dish$review_count[3], "Total Reviews"), href = top_reviewed_dish$url[3])
         )
     
-    output$plot3 <- renderPlot(
+    output$timelapse_reviews <- renderPlot(
         ggplot(og_bonapp_df, aes(x=published, y=review_count)) + geom_jitter(aes(color=review_count)) + 
-            xlab("Months of Publishing") + ylab("Reviews Written per Recipe") + ggtitle("Number of Reviews Written per Recipe") +
+            xlab("Year, Month Published") + ylab("Total Reviews Written") + ggtitle("Total Reviews Written per Recipe") +
             labs(color = "Count") 
     )
     output$reviews_table <- renderTable(
-        year_review_totals
-    )
-    
-    output$plot8 <- renderPlot(
-        ggplot(og_bonapp_df, aes(x=published, y=review_count)) + geom_col(aes(fill=format(og_bonapp_df$published, "%Y"))) +
-            theme(legend.title=element_blank()) + xlab("Months of Publishing") + ylab("Total Reviews Written per Month") +
-            ggtitle("Total Reviews Written by Month")
+        og_bonapp_df %>% group_by(Year = as.character(year(published))) %>% summarise("Review Count" = sum(review_count)) %>% 
+            filter(!is.na(Year))
     )
 
-    
-    # INFORMATION Recipe Count Through the Years
-    
-    output$plot2 <- renderPlot(
-        og_bonapp_df %>% filter(!is.na(published)) %>% ggplot(aes(x=(format(published, "%m/%B")))) + 
-            geom_bar(na.rm = TRUE, position = "dodge", aes(fill=(format(published, "%Y")))) +
-            ggtitle("Number of Recipes Published From 2015-2020") + theme(legend.title=element_blank()) +
-            xlab("Months") + ylab("Recipe Count") + theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-    )
-    
-    table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(published)) %>% group_by(., Year = format(published, "%Y")) %>% 
-        summarise(., "Recipe Count" = n_distinct(dishtitle))
-    as.data.frame(table_totals_per_year)
-    output$totals_table <- renderTable(table_totals_per_year)
-    
-    output$plot10 <- renderPlot(
-        ggplot(og_bonapp_df, aes(x=published)) + geom_bar(aes(fill=format(og_bonapp_df$published, "%Y"))) +
-            theme(legend.title=element_blank()) + xlab("Publishing Timeline, Months") + ylab("Recipe Count")
-    )
-            ### THIS IS THE INTERACTIVE GRAPH
-                ## RETURN AND ADD BREAKS TO COLORS
-
-    df_input <- reactive({
-        og_bonapp_df %>% filter(., format(og_bonapp_df$published, "%Y") %in% c(input$checkGroup1))
-    })
-    
-    output$plot9 <- renderPlot(
-    df_input() %>% group_by(., year = format(published, "%Y"), month = format(published, "%m/%B")) %>% 
-        summarise(., recipe_count = n_distinct(dishtitle)) %>% 
-        ggplot(aes(x=month, y=as.numeric(recipe_count))) + geom_col(position = "dodge", aes(fill=year)) +
-        ylab("Total Recipes") + xlab("Months") + labs(fill = "Year") + 
-        theme(axis.text.x = element_text(angle = 45, hjust = 1))
-
-    )
-    
     
     # Ingredients
     
@@ -106,11 +114,15 @@ function(input, output, session){
                 color =  as.vector(wes_palette(50, name = "Moonrise3", type = "continuous")))
     })
     
-    output$pop_ingred_table <- renderDataTable(popular_ingred_table)
+    output$pop_ingred_table <- renderDataTable(
+        ingred_badata_df %>% group_by(Ingredient = ingred) %>% 
+            summarise(frequency_count = n_distinct(dishtitle)) %>%
+            arrange(desc(frequency_count)) %>% rename("Frequency Count" = frequency_count)
+    )
     
     ingred_input_df <- reactive({
         ingred_badata_df %>% filter(grepl(input$ingred_choice, ingred)) %>% 
-        group_by(., Year = format(published, "%Y")) %>% tally() %>% mutate(., Ratio = n/year_recipe_totals$n) 
+        group_by(Year = year(published)) %>% tally() %>% mutate(., Ratio = n/year_recipe_totals$n) 
     })
     
     output$plot11 <- renderPlot(
@@ -121,23 +133,39 @@ function(input, output, session){
     )
     
     
-    # COVID-19 Recipe Count in 2020
+    # COVID-19
     
-    output$plot4 <- renderPlot(
-        ggplot(df_2020_totals, aes(x=published, y=n)) + geom_bar(stat = "identity", aes(fill=n)) + 
-            ggtitle("Monthly Total Recipes Published in 2020") + xlab("Months") + ylab("Recipe Count") + theme(legend.title=element_blank()) +
-            scale_fill_gradientn(colors = wes_palette("Darjeeling1", 3, type = "continuous"))
+    output$recipes_in_2020 <- renderPlot(
+        og_bonapp_df %>% filter(year(published) == 2020) %>% group_by(published) %>% 
+            summarise(recipe_count = n_distinct(dishtitle)) %>% 
+        ggplot(aes(x=published, y=recipe_count)) + geom_col(fill="blue") + 
+            ggtitle("Monthly Total Recipes Published in 2020") + xlab("Months") + ylab("Recipe Count") + 
+            theme(legend.title=element_blank())
     )
    
-    # COVID-19 Review Count 2020
-    
-    output$plot5 <- renderPlot(
-        ggplot(df_2020_by_Pub, aes(x=published, y=review_count)) + 
-            geom_col(aes(fill=(review_count))) + theme(legend.title=element_blank()) + 
-            ggtitle("Monthly Total Reviews Written in 2020") + xlab("Months") + ylab("Review Count") +
-            scale_fill_gradientn(colors = brewer.pal(n=10, name = "Spectral")) #wes_palette("Zissou1", 3, type = "continuous"))
+    output$review_count_2020 <- renderPlot(
+        og_bonapp_df %>% filter(year(published) == 2020) %>% group_by(published) %>% 
+            summarise(review_count = sum(review_count)) %>% 
+        ggplot(aes(x=published, y=review_count)) + 
+            geom_col(fill="blue") + theme(legend.title=element_blank()) + 
+            ggtitle("Monthly Total Reviews Written in 2020") + xlab("Months") + ylab("Review Count")
     )
     
+    output$avg_review_count <- renderPlot(
+        og_bonapp_df %>% filter(year(published) %in% c(as.integer(unlist(strsplit(input$all_years, ", "))))) %>%
+            group_by(Year = as.character(year(published)), published) %>%
+            summarise(avg_reviews = sum(review_count) / n_distinct(dishtitle)) %>%
+            ggplot(aes(x=month(published, label = TRUE), y=avg_reviews)) +
+            geom_line(size = 1, aes(group=factor(Year), color=factor(Year))) +
+            theme(legend.title=element_blank()) +
+            ggtitle("Average Reviews Recieved, by Year") + xlab("Months") + ylab("Average Review Count")
+    )
+    
+    output$monthly_review_count <- renderPlot(
+        ggplot(og_bonapp_df, aes(x=published, y=review_count)) + geom_col(aes(fill=year(published))) +
+            theme(legend.title=element_blank()) + xlab("Months of Publishing") + ylab("Total Reviews Written per Month") +
+            ggtitle("Total Reviews Written by Month")
+    )
     
 }
 
