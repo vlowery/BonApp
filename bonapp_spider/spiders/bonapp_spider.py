@@ -22,7 +22,7 @@ class BonappSpider(Spider):
         
         ## Breaks starting search page into urls per month in date range
 
-        timespan = pd.date_range(start='1/1/2014', end='5/1/2020', freq='MS')
+        timespan = pd.date_range(start='1/1/2014', end='8/1/2020', freq='MS')
         urls_bymonth = [f'https://www.bonappetit.com/search/?content=recipe&issueDate={date}-01' for date in timespan.strftime('%Y-%m')]
         for url in urls_bymonth:
             yield Request(url=url, callback=self.parse_monthly_urls)
@@ -106,8 +106,7 @@ class BonappSpider(Spider):
                 if new_height < scroll_height:
                     break
             review_text = response.xpath('//div[@class="review-body"]//text()').extract()  
-            review_count = len(WebDriverWait(driver, 2,ignored_exceptions=StaleElementReferenceException)\
-                                .until(EC.presence_of_all_elements_located((By.XPATH, ('//div[@class="review "]')))))
+            review_count = len(response.xpath('//div[@class="review "]'))
             driver.quit()
         else:
             review_text = response.xpath('//div[@class="review-body"]//text()').extract()  
