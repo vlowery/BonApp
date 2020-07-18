@@ -69,7 +69,9 @@ shinyUI(dashboardPage(
                          ),
                      h2("Total Recipe Output, 2014-2020"),           
                      fluidRow(
-                         box(width = 5, plotOutput("yearly_publishing")), 
+                         tabBox(width = 5, 
+                                tabPanel("Monthly Trends", plotOutput("monthly_publishing")),
+                                tabPanel("Yearly Trends", plotOutput("yearly_publishing"))), 
                          box(width = 4, p("Output in general it seems has been on the decline for a few years. 
                                           The graph to the left clearly illustrates a lessening in new material 
                                           for the past three years. Bon Appetit's online recipe peak looks to fall within 2016, 
@@ -116,7 +118,10 @@ shinyUI(dashboardPage(
                         infoBoxOutput("ratings_first"), infoBoxOutput("ratings_second"), infoBoxOutput("ratings_third")
                         ),
                      fluidRow(
-                         box(width = 8, plotOutput("timelapse_ratings")),
+                         tabBox(width = 8, 
+                                tabPanel("Scatter Plot", plotOutput("timelapse_ratings")),
+                                tabPanel("Bar Plot", plotOutput("bar_ratings")),
+                                tabPanel("Density Plot", plotOutput("density_ratings"))),
                          box(width = 4, 
                             p("The graph to the left shows that, except for a few very negative people in 2016 and 
                             2017, recipes have been mostly well-rated.  In fact, the average lowest rating has had a 

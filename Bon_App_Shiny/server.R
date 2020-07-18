@@ -13,9 +13,10 @@ function(input, output, session){
     )
     
     output$yearly_publishing <- renderPlot(
-        og_bonapp_df %>% select(dishtitle, published) %>% group_by(year(published)) %>%
+        og_bonapp_df %>% select(dishtitle, published) %>% group_by(Year = year(published)) %>%
              na.omit() %>% summarise(yearly_totals = n_distinct(dishtitle)) %>% 
-            ggplot() + geom_line(aes(x = year(published), y = yearly_totals)) + 
+            ggplot(aes(x = Year, y = yearly_totals)) + geom_line(size =2, color = "darkblue") + 
+            geom_point(color = "darkblue", size = 5) + geom_point(color = "pink", size = 4) +
             theme(legend.title=element_blank()) + theme(legend.position="none") + 
             xlab("Publishing Timeline, Years") + ylab("Recipe Count")
     )
@@ -28,22 +29,22 @@ function(input, output, session){
         
     )
     
-    table_totals_per_year <- og_bonapp_df  %>% filter(!is.na(published)) %>% group_by(., Year = format(published, "%Y")) %>% 
-        summarise(., "Recipe Count" = n_distinct(dishtitle))
-    as.data.frame(table_totals_per_year)
-    output$totals_table <- renderTable(table_totals_per_year)
+    output$totals_table <- renderTable(
+        og_bonapp_df %>% group_by(Year = year(published)) %>% na.omit() %>% 
+            summarise("Recipe Count" = n_distinct(dishtitle))
+    )
     
     
     ### THIS IS THE INTERACTIVE GRAPH
     ## RETURN AND ADD BREAKS TO COLORS
     
     df_input <- reactive({
-        og_bonapp_df %>% filter(., format(og_bonapp_df$published, "%Y") %in% c(input$checkGroup1))
+        og_bonapp_df %>% filter(year(published) %in% c(input$checkGroup1))
     })
     
     output$plot9 <- renderPlot(
-        df_input() %>% group_by(., year = format(published, "%Y"), month = format(published, "%m/%B")) %>% 
-            summarise(., recipe_count = n_distinct(dishtitle)) %>% 
+        df_input() %>% group_by(year = year(published), month = month(published)) %>% 
+            summarise(recipe_count = n_distinct(dishtitle)) %>% 
             ggplot(aes(x=month, y=as.numeric(recipe_count))) + geom_col(position = "dodge", aes(fill=year)) +
             ylab("Total Recipes") + xlab("Months") + labs(fill = "Year") + 
             theme(axis.text.x = element_text(angle = 45, hjust = 1))
@@ -52,43 +53,61 @@ function(input, output, session){
     
     
     # Ratings through the Years
-    
-    output$timelapse_ratings <- renderPlot(
-        ## Add a mean bar for each year to see progression of sentiment
-        ggplot(og_bonapp_df, aes(x=published, y=rating)) + geom_point(size = 3, alpha = .6, aes(color=rating)) +
-            scale_color_gradientn(colors = wes_palette("Darjeeling1", 3, type = "continuous"))
-    )
 
-        output$ratings_first <- renderInfoBox(
-        infoBox(title = "Most Rated Dish", value = top_rated_dish$dishtitle[1], 
+    output$ratings_first <- renderInfoBox(
+        infoBox(title = "Most Rated Dish", value = top_rated_dish$dishtitle[1], color = "green",
                 subtitle = paste(top_rated_dish$ratings_count[1], "Total Ratings"), href = top_rated_dish$url[1], fill = TRUE)
     )
     
     output$ratings_second <- renderInfoBox(
-        infoBox(title = "Second Most Rated", value = top_rated_dish$dishtitle[2], 
-                subtitle = paste(top_rated_dish$ratings_count[2], "Total Ratings"), href = top_rated_dish$url[2], fill = TRUE)
+        infoBox(title = "Second Most Rated", value = top_rated_dish$dishtitle[2], color = "green", 
+                subtitle = paste(top_rated_dish$ratings_count[2], "Total Ratings"), href = top_rated_dish$url[2])
     )
     
     output$ratings_third <- renderInfoBox(
-        infoBox(title = "Third Most Rated", value = top_rated_dish$dishtitle[3], 
-                subtitle = paste(top_rated_dish$ratings_count[3], "Total Ratings"), href = top_rated_dish$url[3], fill = TRUE)
+        infoBox(title = "Third Most Rated", value = top_rated_dish$dishtitle[3], color = "green", 
+                subtitle = paste(top_rated_dish$ratings_count[3], "Total Ratings"), href = top_rated_dish$url[3])
+    )
+    
+    output$timelapse_ratings <- renderPlot(
+        ggplot(og_bonapp_df, aes(x=published, y=rating)) + geom_point(size = 3, alpha = .6, aes(color=rating)) +
+            scale_color_gradientn(colors = wes_palette("Darjeeling1", 3, type = "continuous")) + theme_bw() + 
+            theme(legend.position="none") + xlab("Published Date (Months)") + ylab("Rating") + 
+            ggtitle("Distribution of Ratings Given Since 2014") + scale_x_date(date_breaks = "1 year", date_labels = "%Y")
+    )
+    
+    output$bar_ratings <- renderPlot(
+        og_bonapp_df %>% group_by(Year = year(published)) %>% summarise(total_ratings = sum(ratings_count)) %>% 
+        ggplot(aes(x = Year, y = total_ratings)) + 
+            geom_col(alpha = .8, size = 2, fill = "darkblue") + 
+            geom_text(aes(label=total_ratings), vjust=2, color = "pink", size = 6) + 
+            theme(legend.position="none") + xlab("Published Date (Years)") + ylab("Total Ratings Received") + 
+            ggtitle("Frequency of Ratings Given Since 2014") + theme_minimal() #+ 
+            # scale_x_continuous(breaks=seq(2014, 2020))
+    )
+    
+    output$density_ratings <- renderPlot(
+        ggplot(og_bonapp_df, aes(x = rating, group = year(published))) + 
+            geom_density(size = 2, aes(color = as.character(year(published)))) + theme_bw() + 
+            scale_color_manual(values = brewer.pal(7, "Spectral")) + labs(color = "Year") + 
+            ylab("Popularity of Rating Score") + xlab("Rating") + ggtitle("Density of Ratings Given Since 2014") 
     )
     
     
     ## Review Count through the years
     
     output$reviews_first <- renderInfoBox(
-        infoBox(title = "Most Reviewed Dish", value = top_reviewed_dish$dishtitle[1], 
+        infoBox(title = "Most Reviewed Dish", value = top_reviewed_dish$dishtitle[1], color = "green", 
                 subtitle = paste(top_reviewed_dish$review_count[1], "Total Reviews"), href = top_reviewed_dish$url[1], fill = TRUE)
         )
     
     output$reviews_second <- renderInfoBox(
-        infoBox(title = "Second Most Reviewed", value = top_reviewed_dish$dishtitle[2], 
+        infoBox(title = "Second Most Reviewed", value = top_reviewed_dish$dishtitle[2], color = "green", 
                 subtitle = paste(top_reviewed_dish$review_count[2], "Total Reviews"), href = top_reviewed_dish$url[2])
         )
     
     output$reviews_third <- renderInfoBox(
-        infoBox(title = "Third Most Reviewed", value = top_reviewed_dish$dishtitle[3], 
+        infoBox(title = "Third Most Reviewed", value = top_reviewed_dish$dishtitle[3], color = "green", 
                 subtitle = paste(top_reviewed_dish$review_count[3], "Total Reviews"), href = top_reviewed_dish$url[3])
         )
     
