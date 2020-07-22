@@ -14,6 +14,7 @@ og_bonapp_df <- read.csv("data/full_bonapp_df.csv", stringsAsFactors = FALSE, ro
 ingred_badata_df <- read.csv("data/ingred_bonapp_df.csv", stringsAsFactors = FALSE, row.names = 1)
 
 og_bonapp_df$published <- ymd(og_bonapp_df$published)
+ingred_badata_df$published <- ymd(ingred_badata_df$published)
 
 df_2020_totals <- og_bonapp_df %>% filter(year(published) == 2020) %>% 
   group_by(published) %>% tally()
