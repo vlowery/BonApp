@@ -70,20 +70,14 @@ class BonappSpider(Spider):
             instructions = response.xpath('//li[@class="step"]//text()').extract()
         else:
             instructions = response.xpath('//ul[@class="steps"]//text()').extract()
-        
-        ## Some formats do not include rating/review count, if so a manual average is taken, else 0
+
+        rating = ''
+        ratings_count = 0
+
+        ## Some formats do not include rating/review count, if so a manual average is taken later, else 0
         if response.xpath('//div[@class="max-width-container"]/div/img/@alt').extract_first():
             rating = response.xpath('//div[@class="max-width-container"]/div/img/@alt').extract_first().split(" ")[0]
             ratings_count = response.xpath('//span[@class="review-count"]/text()').extract_first().split(' ')[0]
-        elif response.xpath('//div[@class="review "]'):
-            score_list = [int(review_item.xpath('.//img[@class="review-star"]/@alt').extract_first().strip(" ")[0]) 
-                        for review_item in response.xpath('//div[@class="review "]') 
-                        if review_item.xpath('.//img[@class="review-star"]/@alt').extract_first()]
-            ratings_count = len(score_list)
-            rating = sum(score_list)/ratings_count
-        else:
-            rating = ''
-            ratings_count = 0
 
         ## Reviews may need selenium to click "View More"
         if response.xpath('//button[@class="view-more-btn"]/text()').extract_first() == 'VIEW MORE':
@@ -105,13 +99,21 @@ class BonappSpider(Spider):
                 new_height = driver.execute_script("return document.body.scrollHeight")
                 if new_height < scroll_height:
                     break
-            review_text = response.xpath('//div[@class="review-body"]//text()').extract()  
-            review_count = len(response.xpath('//div[@class="review "]'))
+            review_text = [review.text for review in driver.find_elements_by_xpath('//div[@class="review-body"]')]  
+            review_count = len(driver.find_elements_by_xpath('//div[@class="review "]'))
+            if not rating:
+                score_list = [int(review_item.get_attribute('alt').strip(" ")[0]) 
+                    for review_item in driver.find_elements_by_xpath('//div[@class="review "]//img[@class="review-star"]') 
+                    if review_item.get_attribute('alt')]
+                ratings_count = len(score_list)
+                rating = sum(score_list)/ratings_count
             driver.quit()
         else:
             review_text = response.xpath('//div[@class="review-body"]//text()').extract()  
             review_count = len(response.xpath('//div[@class="review "]'))
 
+        
+        
         item = BonappItem()
         item["dishtitle"] = name
         item["published"] = published
